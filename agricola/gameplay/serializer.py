@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 from .models import *
 
 
@@ -37,3 +36,34 @@ class ActivationCostSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActivationCost
         fields = '__all__'
+
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
+        fields = '__all__'
+
+class ResourceImgSerialzier(serializers.ModelSerializer):
+    class Meta:
+        model = ResourceImg
+        fields = '__all__'
+
+class CardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Card
+        fields = '__all__'
+
+class SubFacilityCardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubFacilityCard
+        fields = '__all__'
+
+class JobCardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobCard
+        fields = '__all__'
+
+class MainFacilityCardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MainFacilityCard
+        fields = '__all__'
+

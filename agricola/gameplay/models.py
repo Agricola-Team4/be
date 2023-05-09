@@ -2,9 +2,9 @@ from django.db import models
 
 # Create your models here.
 class Account(models.Model):
-    email = models.CharField(primary_key=True, max_length=30, null=False, default='-')
+    email = models.CharField(primary_key=True, max_length=30, null=False, default='-', unique=True)
     name = models.CharField(max_length=10)
-    user_id = models.CharField(max_length=20, null=False)
+    user_id = models.CharField(max_length=20, null=False, unique=True)
     user_pw = models.CharField(max_length=20, null=False)
 
 class Player(models.Model):
@@ -38,7 +38,7 @@ class Resource(models.Model):
 
 class PlayerResource(models.Model):
     player_id = models.ForeignKey('Player', on_delete=models.CASCADE)
-    resource_id = models.ForeignKey('Resource', on_delete=models.SET_NULL)
+    resource_id = models.ForeignKey('Resource', on_delete=models.CASCADE)
     resource_num = models.IntegerField(null=False, default=0)
 
 class PeriodCard(models.Model):
@@ -50,3 +50,27 @@ class ActivationCost(models.Model):
     card_id = models.ForeignKey('Card', on_delete=models.CASCADE)
     resource_id = models.ForeignKey('Resource', on_delete=models.SET_NULL)
     resource_num = models.IntegerField(null=False)
+
+class File(models.Model):
+    path = models.CharField(null=False, max_length=255)
+    filename = models.CharField(null=False, max_length=255)
+
+class ResourceImg(models.Model):
+    file_id = models.ForeignKey("File", on_delete=models.CASCADE)
+    resource_id = models.ForeignKey("Resource", on_delete=models.CASCADE)
+
+class Card(models.Model):
+    cardname = models.CharField(max_length=20, null=False)
+    card_img = models.ForeignKey('File', on_delete=models.CASCADE)
+
+class SubFacilityCard(models.Model):
+    card_id = models.ForeignKey('Card', on_delete=models.CASCADE)
+    type = models.CharField(50)
+
+class JobCard(models.Model):
+    card_id = models.ForeignKey('Card', on_delete=models.CASCADE)
+    type = models.CharField(50)
+
+class MainFacilityCard(models.Model):
+    card_id = models.ForeignKey('Card', on_delete=models.CASCADE)
+    type = models.CharField(50)
