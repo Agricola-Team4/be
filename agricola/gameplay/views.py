@@ -1,5 +1,7 @@
 from django.shortcuts import render
-
+from rest_framework.viewsets import ModelViewSet
+from .models import *
+from .serializer import *
 # Create your views here.
 class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()
@@ -19,6 +21,7 @@ class BoardPositionViewSet(ModelViewSet):
 
 class FencePositionViewSet(ModelViewSet):
     queryset = FencePosition.objects.all()
+<<<<<<< HEAD
     serializer_class = FencePositionSerializer
 
 class PeriodCardViewSet(ModelViewSet):
@@ -28,3 +31,6 @@ class PeriodCardViewSet(ModelViewSet):
 class ActivationCostViewSet(ModelViewSet):
     queryset = ActivationCost.objects.all()
     serializer_class = ActivationCostSerializer
+=======
+    serializer_class = FencePositionSerializer
+>>>>>>> ad388c3f5677646776e9e02120e70f51c7dea32a
