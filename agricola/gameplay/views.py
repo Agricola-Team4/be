@@ -19,6 +19,16 @@ class AccountViewSet(ModelViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
 
+    @swagger_auto_schema(
+        method='post',
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'user_id': openapi.Schema(type=openapi.TYPE_STRING),
+                'user_pw': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )
+    )
     @action(detail=False, methods=['POST'])
     def login(self, request):  # { 'user_id' : admin, 'user_pw': admin }
         input_id = request.data.get('user_id')
@@ -336,9 +346,11 @@ class PlayerBoardStatusViewSet(ModelViewSet):
         player = Player.objects.get(id=player_id)
         board = self.queryset.get(player_id=player)
         slot = BoardPosition.objects.filter(board_id=board).get(position=position)  # 칸번호로 포지션 받아오기
-
+        if slot is None:
+            return Response({'error': 'Invalid Position'}, status=403)
         resouce = PlayerResource.objects.filter(player_id=player).get(resource_id=animal_type + 6)
-
+        if resouce is None:
+            return Response({'error': 'Invalid animal_type'}, status=403)
         position_type = slot.position_type
         # 우리가 아님
         if position_type in [0, 1, 2]:
@@ -354,12 +366,16 @@ class PlayerBoardStatusViewSet(ModelViewSet):
             slot.animal_num += 1
             slot.save()
             pen = get_pen_by_postiion(board, position)
-            pen.current_num += 1
-            pen.save()
+            if pen is None: # 외양간 하나임
+                pass
+            else:
+                pen.current_num += 1
+                pen.save()
             resouce.resource_num -= 1
             resouce.save()
             return Response({'message': 'succeessfully added a(an) {} to {}'.format(animal_type, position)})
         else:
+            max_num = 0
             if position_type == 3:  # 울타리 -> 최대 2마리
                 max_num = 2
             elif position_type == 4:  # 외양간 -> 최대 1마리
@@ -373,7 +389,7 @@ class PlayerBoardStatusViewSet(ModelViewSet):
                 return Response({'error': 'Only the same type of animal can be put here.'}, status=403)
             slot.animal_num += 1
             slot.save()
-            pen = get_pen_by_postiion(board, position)
+            pen = get_pen_by_postiion(board, position) # 외양간은 이 코드에 도달할 일이 없음
             pen.current_num += 1
             pen.save()
             resouce.resource_num -= 1
@@ -566,7 +582,6 @@ class BoardPositionViewSet(ModelViewSet):
         if type == 'cowshed':
             available_cowshed = get_available_cowshed(board_pos)
             return Response({'available': available_cowshed})
-
 
 class FencePositionViewSet(ModelViewSet):
     queryset = FencePosition.objects.all()
@@ -913,13 +928,60 @@ class ActionBoxViewSet(ModelViewSet):
         familyposition = FamilyPosition.objects.all()
         response_list = []
         for action in self.queryset:
+            action.refresh_from_db()
             if action.is_occupied:
-                act = familyposition.get(action_id=action.id)
+                act = familyposition.get(action_id=action)
                 pid = act.player_id.id
-                obj = {"player_id":pid, "action_id":act.action_id.id, "action_name":act.action_id.name}
+                try:
+                    obj = {
+                        "player_id":pid,
+                        "action_id":act.action_id.id,
+                        "action_name":act.action_id.name,
+                        "acc_resource":act.action_id.acc_resource,
+                        "add_resource":act.action_id.add_resource,
+                        "round":act.action_id.round,
+                        "is_res":act.action_id.is_res,
+                        "is_occupied": act.action_id.is_occupied,
+                        "card_id":act.action_id.card_id.id
+                    }
+                except AttributeError:
+                    obj = {
+                        "player_id":pid,
+                        "action_id":act.action_id.id,
+                        "action_name":act.action_id.name,
+                        "acc_resource":act.action_id.acc_resource,
+                        "add_resource":act.action_id.add_resource,
+                        "round":act.action_id.round,
+                        "is_res":act.action_id.is_res,
+                        "is_occupied": act.action_id.is_occupied,
+                        "card_id":None
+                    }
                 response_list.append(obj)
             else:
-                obj = {"player_id":-1, "action_id":action.id, "action_name":action.name}
+                try:
+                    obj = {
+                        "player_id":-1,
+                        "action_id":action.id,
+                        "action_name":action.name,
+                        "acc_resource":action.acc_resource,
+                        "add_resource":action.add_resource,
+                        "round":action.round,
+                        "is_res":action.is_res,
+                        "is_occupied": action.is_occupied,
+                        "card_id":action.card_id.id
+                    }
+                except AttributeError:
+                    obj = {
+                        "player_id":-1,
+                        "action_id":action.id,
+                        "action_name":action.name,
+                        "acc_resource":action.acc_resource,
+                        "add_resource":action.add_resource,
+                        "round":action.round,
+                        "is_res":action.is_res,
+                        "is_occupied": action.is_occupied,
+                        "card_id":None
+                    }
                 response_list.append(obj)
         return Response(response_list)
 
@@ -1118,8 +1180,7 @@ class FamilyPositionViewSet(ModelViewSet):
                 pass
             #교습
             elif action_id == 5:
-                # lesson(player, card)
-                pass
+                response = lesson(player, card)
 
             # 농장 확장
             elif action_id == 8:
