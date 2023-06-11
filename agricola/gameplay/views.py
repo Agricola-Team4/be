@@ -1004,11 +1004,19 @@ class GameStatusViewSet(ModelViewSet):
             playerfood.save()
             hungrytoken.save()
         return Response({'message':'next period'})
-    
-    @action(detail=False, methods=['get'])
+    @swagger_auto_schema(
+        method='put',
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'position': openapi.Schema(type=openapi.TYPE_INTEGER)
+            }
+        )
+    )
+    @action(detail=False, methods=['put'])
     def period_end2(self, request):
         # (수확3번) 1️⃣,2️⃣동물 번식
-        pos = request.data.get('pos_id')
+        pos = request.data.get('position')
         players = Player.objects.all()
         for player in players:
             playerBoard = PlayerBoardStatus.objects.get(player_id = player.id)
